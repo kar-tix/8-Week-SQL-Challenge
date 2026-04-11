@@ -8,4 +8,4 @@ FROM sales
 INNER JOIN menu
     ON sales.product_id = menu.product_id
 GROUP BY customer
-ORDER BY customer
+ORDER BY customer;
