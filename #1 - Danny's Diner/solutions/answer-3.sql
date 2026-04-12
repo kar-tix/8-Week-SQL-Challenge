@@ -8,7 +8,7 @@ WITH rank_sales AS(
         menu.product_name as product,
         DENSE_RANK() OVER
             (PARTITION BY customer_id
-            ORDER BY  order_date) as rank
+            ORDER BY  order_date) as rank_item
     FROM sales
     INNER JOIN menu
         ON menu.product_id = sales.product_id
@@ -18,6 +18,6 @@ SELECT
     customer,
     product
 FROM rank_sales
-WHERE rank = 1
+WHERE rank_item = 1
 GROUP BY customer, product
 ORDER BY customer;

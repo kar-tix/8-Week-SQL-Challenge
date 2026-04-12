@@ -5,5 +5,5 @@ SELECT
     sales.customer_id as customer,
     COUNT(DISTINCT sales.order_date) as count_date
 FROM sales
-GROUP BY customer_id
+GROUP BY customer
 ORDER BY customer;
