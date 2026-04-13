@@ -2,7 +2,7 @@
 
 # Case Study #1 - Danny's Diner </br>
 
-<img src="img/logo_case.png" alt="Logo case study 1" width="400" height="400">
+<img src="img/logo_case.png" alt="Logo case study 1" width="500" height="500">
 </div>
 
 ## Informacje
