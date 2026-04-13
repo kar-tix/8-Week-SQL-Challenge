@@ -1,3 +1,5 @@
+-- CREATE DATABASE dannys_dinner;
+
 -- stworzenie tabeli "sales" i uzupełnienie wartościami
 CREATE TABLE sales(
     "customer_id" VARCHAR(1),

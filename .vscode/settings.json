@@ -6,6 +6,16 @@
 			"server": "localhost",
 			"port": 5432,
 			"driver": "PostgreSQL",
+			"name": "dannys_dinner",
+			"database": "dannys_dinner",
+			"username": "postgres"
+		},
+		{
+			"ssh": "Disabled",
+			"previewLimit": 50,
+			"server": "localhost",
+			"port": 5432,
+			"driver": "PostgreSQL",
 			"name": "posgres",
 			"database": "postgres",
 			"username": "postgres"
@@ -16,8 +26,8 @@
 			"server": "localhost",
 			"port": 5432,
 			"driver": "PostgreSQL",
-			"name": "dannys_dinner",
-			"database": "dannys_dinner",
+			"name": "pizza_runner",
+			"database": "pizza_runner",
 			"username": "postgres"
 		}
 	]
