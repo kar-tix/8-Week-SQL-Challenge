@@ -5,6 +5,12 @@
 <img src="img/logo_case.png" alt="Logo case study 1" width="400" height="400">
 </div>
 
+## Informacje
+W folderze *solutions* znajdują się pliki z rozwiązaniami w SQL.</br>
+Do wykonania wykorzystany został SQL oraz PostgreSQL.</br>
+Szczegółowe informacje dotyczące tego studium przypadku znajdują się [tutaj](https://8weeksqlchallenge.com/case-study-1/).
+
+
 ## 📋 Spis treści
 
 - [Opis](#opis)
