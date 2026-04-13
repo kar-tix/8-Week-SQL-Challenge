@@ -27,4 +27,4 @@ SELECT *,
             (PARTITION BY customer_id, members
             ORDER BY order_date)
     END as ranking
-FROM all_joined
+FROM all_joined;
