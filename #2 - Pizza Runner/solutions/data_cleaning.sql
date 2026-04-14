@@ -29,9 +29,9 @@ SELECT
     order_time
 FROM customer_orders;
 
--- SELECT * FROM customer_orders_temp;
+SELECT * FROM customer_orders_temp;
 
--- SELECT * FROM runner_orders;
+SELECT * FROM runner_orders;
 
 CREATE TABLE runner_orders_temp AS
 SELECT

@@ -254,9 +254,113 @@ ORDER BY customer_id, pizza_name;
 
 ---
 
+### 6. What was the maximum number of pizzas delivered in a single order?
+
+_Jaka była największa liczba pizz dostarczonych w ramach jednego zamówienia?_
+
+```sql
+SELECT
+    c.order_id,
+    COUNT(pizza_id) as pizzas
+FROM customer_orders_temp as c
+INNER JOIN runner_orders_temp
+    ON c.order_id = runner_orders_temp.order_id
+WHERE cancellation IS NULL
+GROUP BY c.order_id
+ORDER BY pizzas DESC LIMIT 1;
+```
+
+
+#### Wynik zapytania/Odpowiedź:
+| order_id | pizzas |
+| :---: | :---: |
+| 4 | 3 |
+
+---
+
+### 7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+
+_Dla każdego klienta, ile dostarczonych pizz miało chociaż 1 zmianę i ile nie miało żadnych zmian?_
+
+```sql
+SELECT
+    customer_id,
+    SUM(
+        CASE
+            WHEN exclusions IS NOT NULL OR extras IS NOT NULL THEN 1
+            ELSE 0
+        END 
+    ) as min_1_changes,
+    SUM(
+        CASE
+            WHEN exclusions IS NULL AND extras IS NULL THEN 1
+            ELSE 0
+        END 
+    ) as no_changes
+FROM customer_orders_temp
+INNER JOIN runner_orders_temp
+    ON customer_orders_temp.order_id = runner_orders_temp.order_id
+WHERE cancellation IS NULL
+GROUP BY customer_id
+ORDER BY customer_id;
+```
+#### Proces
+Dzięki wcześniejszemu wyczyszczeniu danych zapytanie jest krótkie i przejrzyste: w funkcji agregującej SUM() zastosowano wyrażenie CASE, której warunki definiują czy w danym zamówieniu była zmiana czy też nie.
+
+#### Wynik zapytania/Odpowiedź:
+
+| customer_id | min_1_changes | no_changes |
+| :---: | :---: | :---: |
+| 101 | 0 | 2 |
+| 102 | 0 | 3 |
+| 103 | 3 | 0 |
+| 104 | 2 | 1 |
+| 105 | 1 | 0 |
+
+---
+
+### 8. How many pizzas were delivered that had both exclusions and extras?
+
+_Ile pizz dostarczono, które zawierały zarówno składniki pominięte, jak i dodatkowe?_
+
+```sql
+SELECT
+    COUNT(pizza_id) as pizzas_with_exclusions_and_extras
+FROM customer_orders_temp
+INNER JOIN runner_orders_temp
+    ON customer_orders_temp.order_id = runner_orders_temp.order_id
+WHERE cancellation IS NULL AND exclusions IS NOT NULL AND extras IS NOT NULL;
+```
+#### Wynik zapytania/Odpowiedź:
+| pizzas_with_exclusions_and_extras |
+| :---: |
+| 1 |
+
+---
+
+### 9. What was the total volume of pizzas ordered for each hour of the day?
+
+_Jaka była łączna liczba zamówionych pizz w każdej godzinie dnia?_
+
+```sql
+
+```
+
+#### Proces:
+
+#### Wynik zapytania/Odpowiedź:
+
+#### Wytłumaczenie:
+
+---
+
+
+
+
+
 </br></br></br></br></br></br></br></br></br></br></br></br>
 
-### 1.
+### 1. 
 
 \_ \_
 
