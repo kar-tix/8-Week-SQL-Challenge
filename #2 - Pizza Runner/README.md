@@ -17,7 +17,16 @@ Szczegółowe informacje dotyczące tego studium przypadku znajdują się [tutaj
 - [Diagram relacji](#diagram-relacji)
 - [Czyszczenie danych](#️-czyszczenie-danych)
 - [Rozwiązanie zapytań: A. Pizza Metrics](#rozwiązanie-a-pizza-metrics)
-  - [1. How many pizzas were ordered?](#)
+  - [1. How many pizzas were ordered?](#1-how-many-pizzas-were-ordered)
+  - [2. How many unique customer orders were made?](#2-how-many-unique-customer-orders-were-made)
+  - [3. How many successful orders were delivered by each runner?](#3-how-many-successful-orders-were-delivered-by-each-runner)
+  - [4. How many of each type of pizza was delivered?](#4how-many-of-each-type-of-pizza-was-delivered)
+  - [5. How many Vegetarian and Meatlovers were ordered by each customer?](#5-how-many-vegetarian-and-meatlovers-were-ordered-by-each-customer)
+  - [6. What was the maximum number of pizzas delivered in a single order?](#6-what-was-the-maximum-number-of-pizzas-delivered-in-a-single-order)
+  - [7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?](#7-for-each-customer-how-many-delivered-pizzas-had-at-least-1-change-and-how-many-had-no-changes)
+  - [8. How many pizzas were delivered that had both exclusions and extras?](#8-how-many-pizzas-were-delivered-that-had-both-exclusions-and-extras)
+  - [9. What was the total volume of pizzas ordered for each hour of the day?](#9-what-was-the-total-volume-of-pizzas-ordered-for-each-hour-of-the-day)
+  - [10. What was the volume of orders for each day of the week?](#10-what-was-the-volume-of-orders-for-each-day-of-the-week)
 - [Rozwiązanie zapytań: B. Runner and Customer Experience](#rozwiązanie-zapytań)
 - [Rozwiązanie zapytań: C. Ingredient Optimisation](#rozwiązanie-zapytań)
 - [Rozwiązanie zapytań: D. Pricing and Ratings](#rozwiązanie-zapytań)
@@ -270,11 +279,11 @@ GROUP BY c.order_id
 ORDER BY pizzas DESC LIMIT 1;
 ```
 
-
 #### Wynik zapytania/Odpowiedź:
+
 | order_id | pizzas |
-| :---: | :---: |
-| 4 | 3 |
+| :------: | :----: |
+|    4     |   3    |
 
 ---
 
@@ -289,13 +298,13 @@ SELECT
         CASE
             WHEN exclusions IS NOT NULL OR extras IS NOT NULL THEN 1
             ELSE 0
-        END 
+        END
     ) as min_1_changes,
     SUM(
         CASE
             WHEN exclusions IS NULL AND extras IS NULL THEN 1
             ELSE 0
-        END 
+        END
     ) as no_changes
 FROM customer_orders_temp
 INNER JOIN runner_orders_temp
@@ -304,18 +313,20 @@ WHERE cancellation IS NULL
 GROUP BY customer_id
 ORDER BY customer_id;
 ```
+
 #### Proces
+
 Dzięki wcześniejszemu wyczyszczeniu danych zapytanie jest krótkie i przejrzyste: w funkcji agregującej SUM() zastosowano wyrażenie CASE, której warunki definiują czy w danym zamówieniu była zmiana czy też nie.
 
 #### Wynik zapytania/Odpowiedź:
 
 | customer_id | min_1_changes | no_changes |
-| :---: | :---: | :---: |
-| 101 | 0 | 2 |
-| 102 | 0 | 3 |
-| 103 | 3 | 0 |
-| 104 | 2 | 1 |
-| 105 | 1 | 0 |
+| :---------: | :-----------: | :--------: |
+|     101     |       0       |     2      |
+|     102     |       0       |     3      |
+|     103     |       3       |     0      |
+|     104     |       2       |     1      |
+|     105     |       1       |     0      |
 
 ---
 
@@ -331,10 +342,12 @@ INNER JOIN runner_orders_temp
     ON customer_orders_temp.order_id = runner_orders_temp.order_id
 WHERE cancellation IS NULL AND exclusions IS NOT NULL AND extras IS NOT NULL;
 ```
+
 #### Wynik zapytania/Odpowiedź:
+
 | pizzas_with_exclusions_and_extras |
-| :---: |
-| 1 |
+| :-------------------------------: |
+|                 1                 |
 
 ---
 
@@ -343,24 +356,61 @@ WHERE cancellation IS NULL AND exclusions IS NOT NULL AND extras IS NOT NULL;
 _Jaka była łączna liczba zamówionych pizz w każdej godzinie dnia?_
 
 ```sql
-
+SELECT
+    DATE_PART('hour', order_time) as hours,
+    COUNT(order_id) as pizzas
+FROM customer_orders_temp
+GROUP BY hours
+ORDER BY hours;
 ```
 
 #### Proces:
 
+Do wyciągnięcia godziny z daty potrzebna była funkcja DATEPART(), w związku z tym, że pracuję na PostgreSQL miała ona formę DATE_PART().
+
 #### Wynik zapytania/Odpowiedź:
 
-#### Wytłumaczenie:
+| hours | pizzas |
+| :---: | :----: |
+|  11   |   1    |
+|  13   |   3    |
+|  18   |   3    |
+|  19   |   1    |
+|  21   |   3    |
+|  23   |   3    |
 
 ---
 
+### 10. What was the volume of orders for each day of the week?
 
+_Jaka była liczba zamówień w poszczególne dni tygodnia?_
 
+```sql
+SELECT
+    TO_CHAR(order_time, 'Day') as days,
+    COUNT(order_id) as orders
+FROM customer_orders_temp
+GROUP BY days;
+```
 
+#### Proces:
+
+Funkcja TO_CHAR() jest funkcją, którą PostreSQL wykorzystuje do konwertowania różnych typów danych. W tym przypadku została użyta do zmiany daty w dzień tygodnia.
+
+#### Wynik zapytania/Odpowiedź:
+
+|   days    | orders |
+| :-------: | :----: |
+| Saturday  |   5    |
+| Thursday  |   3    |
+|  Friday   |   1    |
+| Wednesday |   5    |
+
+---
 
 </br></br></br></br></br></br></br></br></br></br></br></br>
 
-### 1. 
+### 1.
 
 \_ \_
 
