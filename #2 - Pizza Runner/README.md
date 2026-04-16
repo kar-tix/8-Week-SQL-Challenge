@@ -408,6 +408,95 @@ Funkcja TO_CHAR() jest funkcją, którą PostreSQL wykorzystuje do konwertowania
 
 ---
 
+## Rozwiązanie: B. Runner and Customer Experience
+
+### 1. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
+
+_Ilu biegaczy zapisało się w każdym tygodniu? (tj. tydzień rozpoczyna się 1 stycznia 2021 r.)_
+
+```sql
+SELECT
+    DATE_PART('WEEK', registration_date + INTERVAL '3 days') as week,
+    COUNT(runner_id) as runners
+FROM runners
+GROUP BY week
+ORDER BY week;
+```
+
+#### Proces:
+
+Użyta w pytaniu A-9 funkcja DATE_PART() pozwala na wyodrębnienie numeru tygodnia z daty, jednakże w związku z tym, że 1 stycznia 2021 wypada w czwartek, funkcja automatycznie liczy ten tydzień do starego roku jako 53 tydzień, dlatego aby liczyć 1 stycznia jako pierwszy tydzień trzeba było dodać interwał przesuwajacy o 3 dni.
+
+#### Wynik zapytania/Odpowiedź:
+
+| week | runners |
+| :--: | :-----: |
+|  1   |    2    |
+|  2   |    1    |
+|  3   |    1    |
+
+---
+
+### 2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
+
+_Ile minut średnio zajmowało każdemu kurierowi dotarcie do Pizza Runner w celu odebrania zamówienia?_
+
+```sql
+SELECT
+    runner_id,
+    DATE_PART('minute', AVG(pickup_time - order_time)) as avg_pickup_time
+FROM runner_orders_temp
+INNER JOIN customer_orders_temp
+    ON runner_orders_temp.order_id = customer_orders_temp.order_id
+WHERE pickup_time IS NOT NULL
+GROUP BY runner_id
+ORDER BY runner_id;
+```
+
+#### Wynik zapytania/Odpowiedź:
+
+| runner_id | avg_pickup_time |
+| :-------: | :-------------: |
+|     1     |       15        |
+|     2     |       23        |
+|     3     |       10        |
+
+---
+
+### 3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
+
+_Czy istnieje jakiś związek między liczbą pizz a czasem potrzebnym na przygotowanie zamówienia?_
+
+```sql
+WITH prep_time_cte AS(
+    SELECT
+        customer_orders_temp.order_id,
+        DATE_PART('minute', pickup_time - order_time) as prep_time,
+        COUNT(pizza_id) as number_of_pizzas
+    FROM customer_orders_temp
+    INNER JOIN runner_orders_temp
+        ON customer_orders_temp.order_id = runner_orders_temp.order_id
+    WHERE pickup_time IS NOT NULL
+    GROUP BY customer_orders_temp.order_id, prep_time
+)
+
+SELECT
+    number_of_pizzas,
+    AVG(prep_time) as avg_prep_time
+FROM prep_time_cte
+GROUP BY number_of_pizzas;
+```
+
+#### Wynik zapytania/Odpowiedź:
+
+| number_of_pizzas | avg_prep_time |
+| :--------------: | :-----------: |
+|        3         |      29       |
+|        2         |      18       |
+|        1         |      12       |
+
+---
+
 </br></br></br></br></br></br></br></br></br></br></br></br>
 
 ### 1.
