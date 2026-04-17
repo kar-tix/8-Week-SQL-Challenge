@@ -27,7 +27,14 @@ Szczegółowe informacje dotyczące tego studium przypadku znajdują się [tutaj
   - [8. How many pizzas were delivered that had both exclusions and extras?](#8-how-many-pizzas-were-delivered-that-had-both-exclusions-and-extras)
   - [9. What was the total volume of pizzas ordered for each hour of the day?](#9-what-was-the-total-volume-of-pizzas-ordered-for-each-hour-of-the-day)
   - [10. What was the volume of orders for each day of the week?](#10-what-was-the-volume-of-orders-for-each-day-of-the-week)
-- [Rozwiązanie zapytań: B. Runner and Customer Experience](#rozwiązanie-zapytań)
+- [Rozwiązanie zapytań: B. Runner and Customer Experience](#rozwiązanie-b-runner-and-customer-experience)
+  - [1. How many runners signed up for each 1 week period?](#1-how-many-runners-signed-up-for-each-1-week-period-ie-week-starts-2021-01-01)
+  - [2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?](#2-what-was-the-average-time-in-minutes-it-took-for-each-runner-to-arrive-at-the-pizza-runner-hq-to-pickup-the-order)
+  - [3. Is there any relationship between the number of pizzas and how long the order takes to prepare?](#3-is-there-any-relationship-between-the-number-of-pizzas-and-how-long-the-order-takes-to-prepare)
+  - [4. What was the average distance travelled for each customer?](#4-what-was-the-average-distance-travelled-for-each-customer)
+  - [5. What was the difference between the longest and shortest delivery times for all orders?](#5-what-was-the-difference-between-the-longest-and-shortest-delivery-times-for-all-orders)
+  - [6. What was the average speed for each runner for each delivery and do you notice any trend for these values?](#6-what-was-the-average-speed-for-each-runner-for-each-delivery-and-do-you-notice-any-trend-for-these-values)
+  - [7. What is the successful delivery percentage for each runner?](#7-what-is-the-successful-delivery-percentage-for-each-runner)
 - [Rozwiązanie zapytań: C. Ingredient Optimisation](#rozwiązanie-zapytań)
 - [Rozwiązanie zapytań: D. Pricing and Ratings](#rozwiązanie-zapytań)
 - [Pytania bonusowe](#pytania-dodatkowe)
@@ -496,6 +503,169 @@ GROUP BY number_of_pizzas;
 |        1         |      12       |
 
 ---
+
+### 4. What was the average distance travelled for each customer?
+
+_Jaka była średnia odległość do pokonana dla każdego klienta?_
+
+```sql
+SELECT
+    customer_id,
+    AVG(distance) as avg_distance
+FROM runner_orders_temp
+INNER JOIN customer_orders_temp
+    ON runner_orders_temp.order_id = customer_orders_temp.order_id
+GROUP BY customer_id
+ORDER BY customer_id;d
+```
+
+#### Wynik zapytania/Odpowiedź:
+
+| customer_id |    avg_distance    |
+| :---------: | :----------------: |
+|     101     |         20         |
+|     102     | 16.733333333333334 |
+|     103     | 23.399999999999995 |
+|     104     |         10         |
+|     105     |         25         |
+
+---
+
+### 5. What was the difference between the longest and shortest delivery times for all orders?
+
+_Jaka była różnica między najdłuższym a najkrótszym czasem realizacji wszystkich zamówień?_
+
+```sql
+SELECT
+    MAX(duration) - MIN(duration) as diff_time
+FROM runner_orders_temp;
+```
+
+#### Wynik zapytania/Odpowiedź:
+
+| diff_time |
+| :-------: |
+|    30     |
+
+---
+
+### 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
+
+_Jaka była średnia prędkość poszczególnych kurierów przy każdym zamówieniu i czy dostrzegasz jakąś tendencję w tych wartościach?_
+
+```sql
+SELECT
+    runner_id,
+    order_id,
+    ROUND(AVG(distance::NUMERIC / NULLIF(duration::NUMERIC / 60, 0)), 2) as avg_speed
+FROM runner_orders_temp
+WHERE cancellation IS NULL
+GROUP BY order_id, runner_id
+ORDER BY runner_id;
+```
+
+#### Proces:
+
+Obliczając średnią prędkość dane zostały rzutowane na typ NUMERIC a nie FLOAT, ponieważ w przypadku PostgreSQL funkcja ROUND nie wspiera typów FLOAT.
+
+#### Wynik zapytania/Odpowiedź:
+
+| runner_id | order_id | avg_speed |
+| :-------: | :------: | :-------: |
+|     1     |    1     |   37.50   |
+|     1     |    2     |   44.44   |
+|     1     |    3     |   40.20   |
+|     1     |    10    |   60.00   |
+|     2     |    4     |   35.10   |
+|     2     |    7     |   60.00   |
+|     2     |    8     |   93.60   |
+|     3     |    5     |   40.00   |
+
+#### Wytłumaczenie:
+
+Obliczając średnią prędkość zastosowałam funkcję NULLIF(), która ma za zadanie sprawdzić, czy przypadkiem wartość nie będzie dzielona przez 0, co wywołałoby błąd. Wprawdzie pizzeria dostarcza pizzę przez swoich kurierów, jednakże warto przyjąć scenariusz, że ktoś zamówił z odbiorem własnym.
+
+---
+
+### 7. What is the successful delivery percentage for each runner?
+
+_Jaki jest procent udanych dostaw dla każdego kuriera?_
+
+```sql
+SELECT
+    runner_id,
+    ((COUNT(order_id)::FLOAT - COUNT(cancellation)::FLOAT) / COUNT(order_id)::FLOAT) * 100 as delivered_percent
+FROM runner_orders_temp
+GROUP BY runner_id
+ORDER BY runner_id;
+```
+
+#### Wynik zapytania/Odpowiedź:
+
+| runner_id | delivered_percent |
+| :-------: | :---------------: |
+|     1     |        100        |
+|     2     |        75         |
+|     3     |        50         |
+
+---
+
+## Rozwiązanie: C. Ingredient Optimisation
+
+### 1. What are the standard ingredients for each pizza?
+
+_Jakie są standardowe składniki każdej pizzy?_
+
+```sql
+WITH toppings_cte as(
+    SELECT
+        pizza_id,
+        STRING_TO_TABLE(toppings, ', ')::INTEGER as toppings_id
+    FROM pizza_recipes
+)
+
+SELECT
+    pizza_name,
+    --toppings_id,
+    STRING_AGG(topping_name, ', ') as ingredients_name
+FROM toppings_cte
+INNER JOIN pizza_names
+    ON toppings_cte.pizza_id = pizza_names.pizza_id
+INNER JOIN pizza_toppings
+    ON toppings_cte.toppings_id = pizza_toppings.topping_id
+GROUP BY pizza_name;
+```
+#### Proces:
+Funkcja STRING_TO_TABLE() zamieniła łańcuch znaków zawarty w tabeli `pizza_recipes` w kolumnie `toppings` na nową tabelę, w której znajdowały się poszczególne id, które było można dopasować do tabeli `pizza_toppings` i wyciągnąć poszczególne składniki.</br>
+Funkcja STRING_AGG() natomiast zamieniła wyciągnięte składniki i zamieniła je w łańcuch znaków, aby wynik był czytelny.
+
+
+#### Wynik zapytania/Odpowiedź:
+| pizza_name | ingredients_name |
+| :---: | :---: |
+| Meatlovers | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami |
+| Vegetarian | Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce |
+
+---
+
+### 1. What was the most commonly added extra?
+
+\_ \_
+
+```sql
+
+```
+
+#### Proces:
+
+#### Wynik zapytania/Odpowiedź:
+
+#### Wytłumaczenie:
+
+---
+
+
+
 
 </br></br></br></br></br></br></br></br></br></br></br></br>
 
