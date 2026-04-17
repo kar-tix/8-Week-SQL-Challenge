@@ -35,9 +35,13 @@ Szczegółowe informacje dotyczące tego studium przypadku znajdują się [tutaj
   - [5. What was the difference between the longest and shortest delivery times for all orders?](#5-what-was-the-difference-between-the-longest-and-shortest-delivery-times-for-all-orders)
   - [6. What was the average speed for each runner for each delivery and do you notice any trend for these values?](#6-what-was-the-average-speed-for-each-runner-for-each-delivery-and-do-you-notice-any-trend-for-these-values)
   - [7. What is the successful delivery percentage for each runner?](#7-what-is-the-successful-delivery-percentage-for-each-runner)
-- [Rozwiązanie zapytań: C. Ingredient Optimisation](#rozwiązanie-zapytań)
-- [Rozwiązanie zapytań: D. Pricing and Ratings](#rozwiązanie-zapytań)
-- [Pytania bonusowe](#pytania-dodatkowe)
+- [Rozwiązanie zapytań: C. Ingredient Optimisation](#rozwiązanie-c-ingredient-optimisation)
+  - [1. What are the standard ingredients for each pizza?](#1-what-are-the-standard-ingredients-for-each-pizza)
+  - [2. What was the most commonly added extra?](#2-what-was-the-most-commonly-added-extra)
+  - [3. What was the most common exclusion?](#3-what-was-the-most-common-exclusion)
+- [Rozwiązanie zapytań: D. Pricing and Ratings](#rozwiązanie-d-pricing-and-ratings)
+  - [1. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner made so far if there are no delivery fees?](#1-if-a-meat-lovers-pizza-costs-12-and-vegetarian-costs-10-and-there-were-no-charges-for-changes---how-much-money-has-pizza-runner-made-so-far-if-there-are-no-delivery-fees)
+  - [2. What if there was an additional $1 charge for any pizza extras?](#2-what-if-there-was-an-additional-1-charge-for-any-pizza-extras)
 
 ## 🔍 Opis
 
@@ -635,52 +639,153 @@ INNER JOIN pizza_toppings
     ON toppings_cte.toppings_id = pizza_toppings.topping_id
 GROUP BY pizza_name;
 ```
+
 #### Proces:
+
 Funkcja STRING_TO_TABLE() zamieniła łańcuch znaków zawarty w tabeli `pizza_recipes` w kolumnie `toppings` na nową tabelę, w której znajdowały się poszczególne id, które było można dopasować do tabeli `pizza_toppings` i wyciągnąć poszczególne składniki.</br>
 Funkcja STRING_AGG() natomiast zamieniła wyciągnięte składniki i zamieniła je w łańcuch znaków, aby wynik był czytelny.
 
-
 #### Wynik zapytania/Odpowiedź:
-| pizza_name | ingredients_name |
-| :---: | :---: |
+
+| pizza_name |                           ingredients_name                            |
+| :--------: | :-------------------------------------------------------------------: |
 | Meatlovers | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami |
-| Vegetarian | Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce |
+| Vegetarian |      Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce       |
 
 ---
 
-### 1. What was the most commonly added extra?
+### 2. What was the most commonly added extra?
 
-\_ \_
+_Jaki był najczęściej wybierany dodatek?_
 
 ```sql
+WITH toppings_cte as(
+    SELECT
+        order_id,
+        STRING_TO_TABLE(extras, ', ')::INTEGER as toppings_id
+    FROM customer_orders_temp
+    WHERE extras IS NOT NULL
+)
 
+SELECT
+    topping_name,
+    COUNT(toppings_id) as how_many_added
+FROM toppings_cte
+INNER JOIN pizza_toppings
+    ON toppings_cte.toppings_id = pizza_toppings.topping_id
+GROUP BY topping_name
+ORDER BY how_many_added DESC
+-- LIMIT 1;
 ```
-
-#### Proces:
 
 #### Wynik zapytania/Odpowiedź:
 
-#### Wytłumaczenie:
+| topping_name | how_many_added |
+| :----------: | :------------: |
+|    Bacon     |       4        |
+|   Chicken    |       1        |
+|    Cheese    |       1        |
 
 ---
 
+### 3. What was the most common exclusion?
 
-
-
-</br></br></br></br></br></br></br></br></br></br></br></br>
-
-### 1.
-
-\_ \_
+_Co najczęściej było odrzucane?_
 
 ```sql
+WITH toppings_cte as(
+    SELECT
+        order_id,
+        STRING_TO_TABLE(exclusions, ', ')::INTEGER as toppings_id
+    FROM customer_orders_temp
+    WHERE exclusions IS NOT NULL
+)
 
+SELECT
+    topping_name,
+    COUNT(toppings_id) as how_many_removed
+FROM toppings_cte
+INNER JOIN pizza_toppings
+    ON toppings_cte.toppings_id = pizza_toppings.topping_id
+GROUP BY topping_name
+ORDER BY how_many_removed DESC
+-- LIMIT 1;
 ```
-
-#### Proces:
 
 #### Wynik zapytania/Odpowiedź:
 
-#### Wytłumaczenie:
+| topping_name | how_many_removed |
+| :----------: | :--------------: |
+|    Cheese    |        4         |
+|  Mushrooms   |        1         |
+|  BBQ Sauce   |        1         |
+
+---
+
+## Rozwiązanie: D. Pricing and Ratings
+
+### 1. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner made so far if there are no delivery fees?
+
+_Jeśli pizza „Meat Lovers” kosztuje 12 dolarów, a wegetariańska 10 dolarów i nie pobiera się żadnych opłat za zmiany w zamówieniu – ile pieniędzy zarobiła dotychczas firma Pizza Runner, zakładając, że nie pobiera opłat za dostawę?_
+
+```sql
+SELECT
+    SUM(
+        CASE
+            WHEN pizza_id = 1 THEN 12
+            WHEN pizza_id = 2 THEN 10
+            ELSE 0
+        END
+    ) as total_earnings
+FROM customer_orders_temp
+INNER JOIN runner_orders_temp
+    ON customer_orders_temp.order_id = runner_orders_temp.order_id
+WHERE cancellation IS NULL;
+```
+
+#### Wynik zapytania/Odpowiedź:
+
+| total_earnings |
+| :------------: |
+|      138       |
+
+---
+
+### 2. What if there was an additional $1 charge for any pizza extras?
+
+_A co, gdyby za każdy dodatkowy składnik do pizzy pobierano dodatkową opłatę w wysokości 1 dolara?_
+
+```sql
+WITH earnings_cte AS(
+    SELECT
+        SUM(
+            CASE
+                WHEN pizza_id = 1 THEN 12
+                WHEN pizza_id = 2 THEN 10
+                ELSE 0
+            END
+        ) as earnings_pizzas,
+        SUM(
+            CASE
+                WHEN extras IS NULL THEN 0
+                ELSE array_length(string_to_array(extras, ','), 1)
+            END
+        ) as earnings_extras
+    FROM customer_orders_temp
+    INNER JOIN runner_orders_temp
+        ON customer_orders_temp.order_id = runner_orders_temp.order_id
+    WHERE cancellation IS NULL
+)
+
+SELECT
+    earnings_extras + earnings_pizzas as total_earnings
+FROM earnings_cte;
+```
+
+#### Wynik zapytania/Odpowiedź:
+
+| total_earnings |
+| :------------: |
+|      142       |
 
 ---
