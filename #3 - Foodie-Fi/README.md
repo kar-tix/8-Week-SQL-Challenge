@@ -401,22 +401,107 @@ INNER JOIN annual_date_cte
 
 ### 10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60 days etc)
 
-__
+_Czy możesz podzielić tę średnią wartość na okresy 30-dniowe (np. 0–30 dni, 31–60 dni itd.)?_
 
 ```sql
+WITH trial_date_cte as(
+-- zwraca, kiedy rozpoczęła się data okresu próbnego
+    SELECT
+        customer_id,
+        start_date as trial_date
+    FROM subscriptions
+    WHERE plan_id = 0
+),
+annual_date_cte as(
+-- zwraca, kiedy rozpoczął się plan roczny
+    SELECT
+    customer_id,
+    start_date as annual_date
+FROM subscriptions
+WHERE plan_id = 3
+),
+intervals as(
+-- podział na miesięczne przedziały
+    SELECT 
+        annual_date - trial_date as diff,
+        WIDTH_BUCKET(annual_date - trial_date, 0, 360, 12) as avg_days_in_periods
+    FROM trial_date_cte
+    INNER JOIN annual_date_cte
+        ON trial_date_cte.customer_id = annual_date_cte.customer_id
+)
 
+SELECT 
+    CONCAT((avg_days_in_periods - 1) * 30, ' - ', avg_days_in_periods * 30, ' days') as  period,
+    COUNT(*) AS total_customers,
+    ROUND(AVG(diff), 2) as avg_days_to_upgrade
+FROM intervals
+GROUP BY avg_days_in_periods
+ORDER BY avg_days_in_periods;
 ```
 
 #### Proces:
+Do podziału daty na przedziały 30-dniowe została użyta funkcja WIDTH_BUCKET(), do której podaje się parametry najmniejszej, największej wartości i liczba podziałów.
+W głównym zapytaniu za pomocą funkcji CONCAT() połączono przedziały na łańcuch znaków.
 
 #### Wynik zapytania/Odpowiedź:
-
+|      period      | total_customers | avg_days_to_up... |
+| :--------------: | :-------------: | :---------------: |
+|   0 - 30 days    |       48        |       9.54        |
+|   30 - 60 days   |       25        |       41.84       |
+|   60 - 90 days   |       33        |       70.88       |
+|  90 - 120 days   |       35        |       99.83       |
+|  120 - 150 days  |       43        |      133.05       |
+|  150 - 180 days  |       35        |      161.54       |
+|  180 - 210 days  |       27        |      190.33       |
+|  210 - 240 days  |        4        |      224.25       |
+|  240 - 270 days  |        5        |      257.20       |
+|  270 - 300 days  |        1        |      285.00       |
+|  300 - 330 days  |        1        |      327.00       |
+|  330 - 360 days  |        1        |      346.00       |
 ---
 
+### 11. How many customers downgraded from a pro monthly to a basic monthly plan in 2020?
 
+_Ilu klientów w 2020 roku przeszło z planu miesięcznego pro na plan miesięczny podstawowy?_
 
+```sql
+WITH next_plans_cte AS (
+  SELECT
+    customer_id,
+    plan_id,
+    LEAD(plan_id) OVER 
+    (PARTITION BY customer_id
+      ORDER BY start_date) as next_plan
+  FROM subscriptions
+  WHERE DATE_PART('year', start_date) = 2020
+)
 
+SELECT
+    COUNT(*) as downgraded_customer
+FROM next_plans_cte
+WHERE plan_id = 2 AND next_plan = 1;
+```
 
+#### Wynik zapytania/Odpowiedź:
+| downgraded_customer |
+| :-----------------: |
+|          0          |
+
+#### Wytłumaczenie:
+Problem z tym zapytaniem polega na tym, że w przykładowych danych podanych w zadaniu nie ma klienta, który przeszedłby na gorszy plan, dlatego aby sprawdzić poprawność dodałam wiersz, w którym klient o ID = 7 przechodzi z planu pro na basic.
+---
+
+```sql
+INSERT INTO subscriptions(
+    "customer_id", "plan_id", "start_date"
+)
+VALUES
+    ('7', '1', '2020-11-01')
+
+```
+| downgraded_customer |
+| :-----------------: |
+|          1          |
 
 
 </br></br></br></br></br></br></br></br>
