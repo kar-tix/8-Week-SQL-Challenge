@@ -520,13 +520,32 @@ VALUES
 
 ## C. Challenge Payment Question
 
+The Foodie-Fi team wants you to create a new payments table for the year 2020 that includes amounts paid by each customer in the subscriptions table with the following requirements:
+
+- monthly payments always occur on the same day of month as the original start_date of any monthly paid plan
+- upgrades from basic to monthly or pro plans are reduced by the current paid amount in that month and start immediately
+- upgrades from pro monthly to pro annual are paid at the end of the current billing period and also starts at the end of the month period
+- once a customer churns they will no longer make payments
+</br></br>
 
 
+*Zespół Foodie-Fi prosi o utworzenie nowej tabeli płatności na rok 2020, która będzie uwzględniać kwoty zapłacone przez każdego klienta w tabeli subskrypcji, z następującymi wymaganiami:*
+
+_- płatności miesięczne zawsze następują w tym samym dniu miesiąca, co pierwotna data rozpoczęcia każdego miesięcznego planu płatnego_</br>
+_- zmiany z planu podstawowego na miesięczny lub profesjonalny są pomniejszane o kwotę aktualnie zapłaconą w danym miesiącu i rozpoczynają się natychmiast_</br>
+_- zmiany z planu miesięcznego na roczny plan profesjonalny są opłacane na koniec bieżącego okresu rozliczeniowego i również rozpoczynają się na koniec miesiąca_</br>
+_- po rezygnacji klienta płatności nie będą już realizowane_
 
 
+\_\_
 
+```sql
 
+```
 
+#### Proces:
+
+#### Wynik zapytania/Odpowiedź:
 
 
 
