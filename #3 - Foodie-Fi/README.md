@@ -489,6 +489,7 @@ WHERE plan_id = 2 AND next_plan = 1;
 
 #### Wytłumaczenie:
 Problem z tym zapytaniem polega na tym, że w przykładowych danych podanych w zadaniu nie ma klienta, który przeszedłby na gorszy plan, dlatego aby sprawdzić poprawność dodałam wiersz, w którym klient o ID = 7 przechodzi z planu pro na basic.
+
 ---
 
 ```sql
